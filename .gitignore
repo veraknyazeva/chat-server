@@ -1,0 +1,9 @@
+.idea/*
+/**/target
+/**/out/*
+/**/*.iml
+/**/*.ipr
+/**/*.iws
+.gradle/*
+/**/**/target
+/**/transaction-logs/*
