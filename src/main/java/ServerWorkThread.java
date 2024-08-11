@@ -27,7 +27,6 @@ public class ServerWorkThread extends Thread {
             out.write(String.format(WELCOME_FORMAT, nickname));
             out.flush();
         } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -44,18 +43,31 @@ public class ServerWorkThread extends Thread {
                     if (messege.equals("/exit")) {
                         break;
                     }
+                    String serverMessageForHistory = String.format(MESSAGE_FORMAT, LocalDateTime.now(), nickname, messege);
+                    saveMessageForHistory(serverMessageForHistory);
                     for (ServerWorkThread otherConnection : Server.connectedSocketList) {
                         if (!otherConnection.equals(this)) {
-                            String serverMessageForHistory = String.format(MESSAGE_FORMAT, LocalDateTime.now(), nickname, messege);
                             send(serverMessageForHistory, otherConnection); // отослать принятое сообщение с привязанного клиента всем остальным
-                            saveMessageForHistory(serverMessageForHistory);
                         }
                     }
                 }
             }
+            in.close();
+            out.close();
             Server.connectedSocketList.remove(this);
             socket.close();
         } catch (IOException e) {
+            String errorMessage = String.format(MESSAGE_FORMAT, LocalDateTime.now(), "server", e.getMessage());
+            try {
+                out.write(errorMessage);
+                out.flush();
+                out.close();
+                in.close();
+                Server.connectedSocketList.remove(this);
+                socket.close();
+            } catch (IOException ex) {
+                System.err.println(ex.getMessage());
+            }
         }
     }
 
@@ -89,19 +101,7 @@ public class ServerWorkThread extends Thread {
         }
     }
 
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public BufferedReader getIn() {
-        return in;
-    }
-
     public BufferedWriter getOut() {
         return out;
-    }
-
-    public String getNickname() {
-        return nickname;
     }
 }
